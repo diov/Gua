@@ -2,6 +2,7 @@ package main
 
 import (
 	"Gua/binchunk"
+	"Gua/vm"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -44,12 +45,51 @@ func printHeader(p *binchunk.Prototype) {
 }
 
 func printCode(p *binchunk.Prototype) {
-	for i, code := range p.Code {
+	for idx, code := range p.Code {
 		line := "-"
 		if len(p.LineInfo) > 0 {
-			line = fmt.Sprintf("%d", p.LineInfo[i])
+			line = fmt.Sprintf("%d", p.LineInfo[idx])
 		}
-		fmt.Printf("\t%d\t[%s]\t0x%08X\n", i+1, line, code)
+		i := vm.Instruction(code)
+		fmt.Printf("\t%d\t[%s]\t%s \t", idx+1, line, i.OpName())
+		printOperands(i)
+		fmt.Printf("\n")
+	}
+}
+
+func printOperands(i vm.Instruction) {
+	switch i.OpMode() {
+	case vm.IABC:
+		a, b, c := i.ABC()
+		fmt.Printf("%d", a)
+		if i.BMode() != vm.OpArgN {
+			if b > 0xFF {
+				fmt.Printf(" %d", -1-b&0xFF)
+			} else {
+				fmt.Printf(" %d", b)
+			}
+		}
+		if i.CMode() != vm.OpArgN {
+			if c > 0xFF {
+				fmt.Printf(" %d", -1-c&0xFF)
+			} else {
+				fmt.Printf(" %d", c)
+			}
+		}
+	case vm.IABx:
+		a, bx := i.ABx()
+		fmt.Printf("%d", a)
+		if i.BMode() == vm.OpArgK {
+			fmt.Printf(" %d", -1-bx)
+		} else if i.BMode() == vm.OpArgU {
+			fmt.Printf(" %d", bx)
+		}
+	case vm.IAsBx:
+		a, sbx := i.AsBx()
+		fmt.Printf("%d %d", a, sbx)
+	case vm.IAx:
+		ax := i.Ax()
+		fmt.Printf("%d", ax)
 	}
 }
 
