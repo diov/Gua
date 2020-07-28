@@ -1,22 +1,42 @@
 package main
 
 import (
+	"Gua/api"
 	"Gua/binchunk"
+	"Gua/state"
 	"Gua/vm"
 	"fmt"
-	"io/ioutil"
-	"os"
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		file, err := ioutil.ReadFile(os.Args[1])
-		if err != nil {
-			panic(err)
-		}
-		prototype := binchunk.Undump(file)
-		listProto(prototype)
-	}
+	//if len(os.Args) > 1 {
+	//	file, err := ioutil.ReadFile(os.Args[1])
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	prototype := binchunk.Undump(file)
+	//	listProto(prototype)
+	//}
+
+	s := state.New()
+	s.PushBoolean(true)
+	printStack(s)
+	s.PushInteger(10)
+	printStack(s)
+	s.PushNil()
+	printStack(s)
+	s.PushString("Hello")
+	printStack(s)
+	s.PushValue(-4)
+	printStack(s)
+	s.Replace(3)
+	printStack(s)
+	s.SetTop(6)
+	printStack(s)
+	s.Remove(-3)
+	printStack(s)
+	s.SetTop(-5)
+	printStack(s)
 }
 
 func listProto(p *binchunk.Prototype) {
@@ -132,4 +152,22 @@ func upvalueName(p *binchunk.Prototype, i int) string {
 		return p.UpvalueNames[i]
 	}
 	return "-"
+}
+
+func printStack(s state.LuaState) {
+	top := s.GetTop()
+	for i := 1; i <= top; i++ {
+		t := s.Type(i)
+		switch t {
+		case api.LuaTBoolean:
+			fmt.Printf("[%t]", s.ToBoolean(i))
+		case api.LuaTNumber:
+			fmt.Printf("[%g]", s.ToNumber(i))
+		case api.LuaTString:
+			fmt.Printf("[%q]", s.ToString(i))
+		default:
+			fmt.Printf("[%s]", s.TypeName(t))
+		}
+	}
+	fmt.Println()
 }
